@@ -126,53 +126,108 @@ dig @127.0.0.1 -p 5355 google.com A  # Forwarded upstream
 
 ### Running with Docker
 
-#### Mainnet (Default)
+#### Running Both Services
+
+The Docker image runs both the DNS server and website:
+
+```bash
+# Build and run both services
+docker build -t near-dns .
+docker run -d --name near-dns \
+  -p 53:53/udp \
+  -p 53:53/tcp \
+  -p 80:80 \
+  near-dns
+
+# Test DNS
+dig @localhost neardns.near A
+
+# Test website
+curl http://localhost
+```
+
+#### Using Docker Compose
+
+For easier development and service orchestration:
+
+```bash
+# Run both services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+For development with hot reload:
+
+```bash
+# Run development profile
+docker-compose --profile dev up
+```
+
+#### Individual Service Control
+
+With Docker Compose, you can control services individually:
+
+```bash
+# Start only DNS server
+docker-compose up -d dns-server
+
+# Start only website
+docker-compose up -d website
+
+# Start both with custom configuration
+docker-compose up -d
+
+# Restart a specific service
+docker-compose restart dns-server
+```
+
+#### Running Both Services
+
+The Docker image now runs both the DNS server and the website:
+
+1. **DNS Server**: Runs on port 53 (both UDP/TCP)
+2. **Website**: Runs on port 80 (served by `serve`)
 
 ```bash
 # Run with mainnet RPC (default)
 docker run -d --name near-dns \
   -p 53:53/udp \
   -p 53:53/tcp \
-  frolvlad/near-dns
+  -p 80:80 \
+  near-dns
 
-# Test it
+# Test DNS
 dig @localhost neardns.near A
+
+# Test website
+curl http://localhost
 ```
 
-#### Testnet
+#### Using Docker Compose
+
+For easier development and service orchestration:
 
 ```bash
-# Run with testnet RPC
-docker run -d --name near-dns-testnet \
-  -p 5355:53/udp \
-  -p 5355:53/tcp \
-  frolvlad/near-dns \
-  --bind 0.0.0.0:53 \
-  --rpc-url https://rpc.testnet.near.org
-
-# Test it
-dig @localhost -p 5355 near-dns.testnet A
-```
-
-#### Additional Options
-
-```bash
-# Run with custom log level
-docker run -d --name near-dns \
-  -e RUST_LOG=debug \
-  -p 53:53/udp \
-  -p 53:53/tcp \
-  frolvlad/near-dns
+# Run both services
+docker-compose up -d
 
 # View logs
-docker logs -f near-dns
+docker-compose logs -f
+
+# Stop services
+docker-compose down
 ```
 
-#### Building from Source
+For development with hot reload:
 
 ```bash
-docker build -t near-dns .
-docker run -d -p 5355:53/udp -p 5355:53/tcp near-dns
+# Run development profile
+docker-compose --profile dev up
 ```
 
 ### Register Your Own Domain (aka Deploying Your Own DNS Contract)

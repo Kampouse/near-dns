@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # NEAR DNS Server
+  dns-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dns-builder
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    environment:
+      - RUST_LOG=info
+      - NEAR_RPC_URL=https://rpc.mainnet.near.org
+    command: ["--bind", "0.0.0.0:53", "--rpc-url", "https://rpc.mainnet.near.org"]
+    restart: unless-stopped
+
+  # NEAR DNS Website
+  website:
+    build:
+      context: ./website
+      dockerfile: ../Dockerfile
+      target: web-builder
+    ports:
+      - "80:80"
+    depends_on:
+      - dns-server
+    restart: unless-stopped
+
+  # Development version with live reload
+  website-dev:
+    build:
+      context: ./website
+      dockerfile: ../Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./website/src:/app/website/src
+      - ./website/public:/app/website/public
+    environment:
+      - NODE_ENV=development
+    command: ["npm", "run", "dev"]
+    profiles:
+      - dev
